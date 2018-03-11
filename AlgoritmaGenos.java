@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class AlgoritmaGenos {
 
@@ -42,6 +43,9 @@ public class AlgoritmaGenos {
     };
     public ArrayList<byte[]> kunciinternal = new ArrayList<>();
 
+    public HashMap<String, byte[]> subbox= new HashMap<String, byte[]>();
+
+
     public static void main(String[] args){
         AlgoritmaGenos ag = new AlgoritmaGenos();
 
@@ -54,13 +58,13 @@ public class AlgoritmaGenos {
 
     }
 
+
     public void mainalgorithm(){
         init();
         permutasiawal();
         System.out.println("Sesudah Permutasi Awal");
         printarray(blokplaintext);
         System.out.println();
-
         putaranfeistel();
         System.out.println("Sesudah Feistel ");
         printarray(blokplaintext);
@@ -68,10 +72,11 @@ public class AlgoritmaGenos {
         permutasiakhir();
     }
 
+
+
     public void init(){
 
-        int[] src = new int[] {1, 2, 3, 4, 5};
-        int b1[] = Arrays.copyOfRange(src, 2, 5);
+        // Pembagian Kunci Internal dari Kunci Eksternal
 
         byte[] kunciin0 =Arrays.copyOfRange(kuncieksternal,0,32);
         byte[] kunciin1 =Arrays.copyOfRange(kuncieksternal,32,64);
@@ -95,6 +100,29 @@ public class AlgoritmaGenos {
                 case 7 : kunciinternal.add(kunciin7); break;
             }
         }
+
+        // Mengisi SubBox
+
+        subbox.put("0000",new byte[]{1,0,0,0});
+        subbox.put("0001",new byte[]{1,0,1,0});
+        subbox.put("0010",new byte[]{1,0,1,1});
+        subbox.put("0011",new byte[]{0,0,0,0});
+
+        subbox.put("0100",new byte[]{1,0,0,1});
+        subbox.put("0101",new byte[]{0,0,0,0});
+        subbox.put("0110",new byte[]{0,1,1,1});
+        subbox.put("0111",new byte[]{1,1,0,1});
+
+        subbox.put("1000",new byte[]{0,1,0,1});
+        subbox.put("1001",new byte[]{0,1,1,0});
+        subbox.put("1010",new byte[]{1,1,1,1});
+        subbox.put("1011",new byte[]{0,0,1,0});
+
+        subbox.put("1100",new byte[]{0,1,0,0});
+        subbox.put("1101",new byte[]{1,1,0,0});
+        subbox.put("1110",new byte[]{0,0,1,1});
+        subbox.put("1111",new byte[]{1,1,1,0});
+
     }
 
     public void putaranfeistel(){
@@ -118,47 +146,34 @@ public class AlgoritmaGenos {
             permutasitengah(blokkanan);
             geser7bit(kunciinternal.get(putaran));
             xor(blokkanan,kunciinternal.get(putaran));
-            //substitusi here
+            subsdanrotasi(blokkanan);
             zigzag(blokkanan);
             geser10bit(blokkanan);
             permutasitengah(blokkanan);
             xor(blokkanan,blokkiri);
             blokkiri = clonekanan;
         }
-
         j = 0 ;
         for (int i = 0 ; i < 32 ; i++){
             blokplaintext[i] = blokkiri[j];
             j++;
         }
-
         k = 0 ;
         for (int i = 32 ; i < 64 ; i++){
             blokplaintext[i] = blokkanan[k];
             k++;
         }
-
     }
 
 
-
-    public byte twobinertodecimal(byte digit1, byte digit2){
-        return (byte) (digit1*2 + digit2);
-    }
-
-
-    public void geser7bit(byte[] kunciinternal){
-        byte[] clone = kunciinternal.clone();
-
-        for (int i = 0 ; i < kunciinternal.length-7; i++){
-            kunciinternal[i] = clone[i+7];
+    public String fourbytetosstring(byte[] arr){
+        String res = "";
+        for (int i = 0 ; i < arr.length ; i++){
+            res += (arr[i]);
         }
-        int j = 0;
-        for (int i = kunciinternal.length-7 ; i < kunciinternal.length; i++){
-            kunciinternal[i] = clone[j];
-            j++;
-        }
+        return res;
     }
+
 
     public void xor(byte[] blokkanan, byte[] blok2){
         for (int i = 0 ; i < blokkanan.length ; i++){
@@ -166,11 +181,31 @@ public class AlgoritmaGenos {
         }
     }
 
-    public void printarray(byte[] arr){
-        for (int i = 0 ; i < arr.length ; i++){
-            System.out.print(arr[i] + ",");
+    public void subsdanrotasi(byte[] blokkanan){
+        byte[] clone = blokkanan.clone();
+        for (int i = 0 ; i < blokkanan.length ; i += 4){
+            byte[] temp = Arrays.copyOfRange(blokkanan,i,i+4);
+            String stemp = fourbytetosstring(temp);
+
+            //substitusi
+            byte[] subs = subbox.get(stemp);
+            int k = 0;
+            for (int j = i ; j < i+4 ; j++){
+                blokkanan[j] = subs[k];
+                k++;
+            }
+
+            //rotasi
+            byte[] clone2 = temp.clone();
+            blokkanan[i] = clone2[3];
+            blokkanan[i+1] = clone2[2];
+            blokkanan[i+2] = clone2[1];
+            blokkanan[i+3] = clone2[0];
         }
     }
+
+
+
     public void zigzag(byte[] blokkanan){
         byte[] clone = blokkanan.clone();
 
@@ -188,7 +223,19 @@ public class AlgoritmaGenos {
             blokkanan[i] = clone[j];
             j++;
         }
+    }
 
+    public void geser7bit(byte[] kunciinternal){
+        byte[] clone = kunciinternal.clone();
+
+        for (int i = 0 ; i < kunciinternal.length-7; i++){
+            kunciinternal[i] = clone[i+7];
+        }
+        int j = 0;
+        for (int i = kunciinternal.length-7 ; i < kunciinternal.length; i++){
+            kunciinternal[i] = clone[j];
+            j++;
+        }
     }
 
     void geser10bit(byte[] blokkanan){
@@ -203,11 +250,6 @@ public class AlgoritmaGenos {
             j++;
         }
     }
-
-    public void rotasi(){
-
-    }
-
 
     public void permutasiawal(){
         byte[] plainclone = blokplaintext.clone();
@@ -230,4 +272,19 @@ public class AlgoritmaGenos {
         }
     }
 
+    public void printarray(byte[] arr){
+        for (int i = 0 ; i < arr.length ; i++){
+            System.out.print(arr[i] + ",");
+        }
+    }
+
+    public int compare64byte(byte[] arr1 , byte[] arr2){
+        int count = 0 ;
+        for (int i = 0 ; i < arr1.length ; i++){
+            if (arr1[i] == arr2[i]){
+                count++;
+            }
+        }
+        return count;
+    }
 }

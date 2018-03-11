@@ -41,6 +41,10 @@ public class AlgoritmaGenos {
             0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0,
             0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1
     };
+
+    public byte[] blokciphertext = new byte[64];    // hasil enkripsi menjadi cipher
+    public byte[] blokplain2 = new byte[64];        // hasil dekrispi menjadi plaintext
+
     public ArrayList<byte[]> kunciinternal = new ArrayList<>();
 
     public HashMap<String, byte[]> subbox= new HashMap<String, byte[]>();
@@ -55,6 +59,21 @@ public class AlgoritmaGenos {
         ag.mainalgorithm();
         System.out.println("Blok Plaintext Sesudah");
         ag.printarray(ag.blokplaintext);
+
+        // Dekripsi
+        System.out.println();
+        System.out.println("========================================================");
+        System.out.println("========================================================");
+
+
+        ag.blokciphertext = ag.blokplaintext.clone();
+        System.out.println("Blok Ciphertext Sebelum ");
+        ag.printarray(ag.blokciphertext);
+        System.out.println();
+        ag.dekripalgorithm();
+        System.out.println("Blok Ciphertext Sesudah");
+        ag.printarray(ag.blokciphertext);
+
 
     }
 
@@ -144,7 +163,6 @@ public class AlgoritmaGenos {
         for (int putaran = 0 ; putaran < 32 ; putaran++){
             byte[] clonekanan = blokkanan.clone();
             permutasitengah(blokkanan);
-            geser7bit(kunciinternal.get(putaran));
             xor(blokkanan,kunciinternal.get(putaran));
             subsdanrotasi(blokkanan);
             zigzag(blokkanan);
@@ -152,6 +170,7 @@ public class AlgoritmaGenos {
             permutasitengah(blokkanan);
             xor(blokkanan,blokkiri);
             blokkiri = clonekanan;
+
         }
         j = 0 ;
         for (int i = 0 ; i < 32 ; i++){
@@ -225,19 +244,6 @@ public class AlgoritmaGenos {
         }
     }
 
-    public void geser7bit(byte[] kunciinternal){
-        byte[] clone = kunciinternal.clone();
-
-        for (int i = 0 ; i < kunciinternal.length-7; i++){
-            kunciinternal[i] = clone[i+7];
-        }
-        int j = 0;
-        for (int i = kunciinternal.length-7 ; i < kunciinternal.length; i++){
-            kunciinternal[i] = clone[j];
-            j++;
-        }
-    }
-
     void geser10bit(byte[] blokkanan){
         byte[] clone = blokkanan.clone();
 
@@ -257,11 +263,24 @@ public class AlgoritmaGenos {
             blokplaintext[i] = plainclone[tabelpermutasiawal[i]];
         }
     }
+    public void dekrippermutasiawal(){
+        byte[] cipherclone = blokciphertext.clone();
+        for (int i = 0 ; i < blokciphertext.length ; i++){
+            blokciphertext[i] = cipherclone[tabelpermutasiawal[i]];
+        }
+    }
 
     public void permutasiakhir(){
         byte[] plainclone = blokplaintext.clone();
         for (int i = 0 ; i < blokplaintext.length ; i++){
             blokplaintext[i] = plainclone[tabelpermutasiakhir[i]];
+        }
+    }
+
+    public void dekrippermutasiakhir(){
+        byte[] cipherclone = blokciphertext.clone();
+        for (int i = 0 ; i < blokciphertext.length ; i++){
+            blokciphertext[i] = cipherclone[tabelpermutasiakhir[i]];
         }
     }
 
@@ -276,6 +295,7 @@ public class AlgoritmaGenos {
         for (int i = 0 ; i < arr.length ; i++){
             System.out.print(arr[i] + ",");
         }
+        System.out.println();
     }
 
     public int compare64byte(byte[] arr1 , byte[] arr2){
@@ -287,4 +307,70 @@ public class AlgoritmaGenos {
         }
         return count;
     }
+
+    // Dekripsi
+
+
+    public void dekripalgorithm(){
+        dekrippermutasiawal();
+        System.out.println("Sesudah Permutasi Awal");
+        printarray(blokciphertext);
+        System.out.println();
+        dekripputaranfeistel();
+        System.out.println("Sesudah Feistel ");
+        printarray(blokciphertext);
+        System.out.println();
+        dekrippermutasiakhir();
+    }
+
+    public void dekripputaranfeistel(){
+        byte[] blokkiri = new byte[32];
+        byte[] blokkanan = new byte[32];
+
+        int j = 0 ;
+        for (int i = 0 ; i < 32 ; i++){
+            blokkiri[j] = blokciphertext[i];
+            j++;
+        }
+
+        int k = 0 ;
+        for (int i = 32 ; i < 64 ; i++){
+            blokkanan[k] = blokciphertext[i];
+            k++;
+        }
+
+        for (int putaran = 31 ; putaran >= 0 ; putaran--){
+            byte[] clonekiri1 = blokkiri.clone();
+            byte[] clonekiri2 = blokkiri.clone();
+
+            permutasitengah(clonekiri1);
+            xor(clonekiri1,kunciinternal.get(putaran));
+            subsdanrotasi(clonekiri1);
+            zigzag(clonekiri1);
+            geser10bit(clonekiri1);
+            permutasitengah(clonekiri1);
+            xor(clonekiri1,blokkanan);
+
+            blokkiri = clonekiri1;
+            blokkanan = clonekiri2;
+
+//            System.out.print("Kiri  ");
+//            printarray(blokkiri);
+//            System.out.print("Kanan ");
+//            printarray(blokkanan);
+
+
+        }
+        j = 0 ;
+        for (int i = 0 ; i < 32 ; i++){
+            blokciphertext[i] = blokkiri[j];
+            j++;
+        }
+        k = 0 ;
+        for (int i = 32 ; i < 64 ; i++){
+            blokciphertext[i] = blokkanan[k];
+            k++;
+        }
+    }
+
 }

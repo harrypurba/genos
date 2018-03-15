@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -10,88 +11,49 @@ public class AlgoritmaGenos {
             57,49,41,33,25,17,9,1,59,51,43,35,27,19,11,3,
             61,53,45,37,29,21,13,5,63,55,47,39,31,23,15,7
     };
-
     public byte[] tabelpermutasiakhir = {
             24,39,7,47,15,55,23,63,31,38,6,46,14,54,22,62,
             30,37,5,45,13,53,21,61,29,36,4,44,12,52,20,60,
             28,35,3,43,11,51,19,59,27,34,2,42,10,50,18,58,
             26,33,1,41,9,49,17,57,25,32,0,40,8,48,16,56
     };
-
     public byte[] tabelpermutasitengah = {
             26,18,10,2,28,20,12,4,30,22,14,6,0,24,16,8,
             25,17,9,1,27,19,11,3,29,21,13,5,31,23,15,7
     };
-
-    public byte[] kuncieksternal = {
-            0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1,
-            1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0,
-            0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1,
-            1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1,
-            1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0,
-            0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0,
-            0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1,
-            1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0
-    };
+    public byte[] kuncieksternal;
 
 
-    public byte[] blokplaintext = {
-            1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1,
-            0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1,
-            0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0,
-            0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1
-    };
-
+    public byte[] blokplaintext;
     public byte[] blokciphertext = new byte[64];    // hasil enkripsi menjadi cipher
     public byte[] blokplain2 = new byte[64];        // hasil dekrispi menjadi plaintext
-
     public ArrayList<byte[]> kunciinternal = new ArrayList<>();
-
     public HashMap<String, byte[]> subbox= new HashMap<String, byte[]>();
 
-
-    public static void main(String[] args){
-        AlgoritmaGenos ag = new AlgoritmaGenos();
-
-        System.out.println("Blok Plaintext Sebelum ");
-        ag.printarray(ag.blokplaintext);
-        System.out.println();
-        ag.mainalgorithm();
-        System.out.println("Blok Plaintext Sesudah");
-        ag.printarray(ag.blokplaintext);
-
-        // Dekripsi
-        System.out.println();
-        System.out.println("========================================================");
-        System.out.println("========================================================");
-
-
-        ag.blokciphertext = ag.blokplaintext.clone();
-        System.out.println("Blok Ciphertext Sebelum ");
-        ag.printarray(ag.blokciphertext);
-        System.out.println();
-        ag.dekripalgorithm();
-        System.out.println("Blok Ciphertext Sesudah");
-        ag.printarray(ag.blokciphertext);
-
-
+    // Konstruktor
+    public AlgoritmaGenos(byte[] temp,byte[] kunci){
+        blokplaintext = temp;
+        kuncieksternal = kunci;
     }
 
+    // Getter
+    public byte[] getBlokciphertext(){
+        return blokciphertext;
+    }
 
-    public void mainalgorithm(){
+    public void enkripsi(){
         init();
         permutasiawal();
-        System.out.println("Sesudah Permutasi Awal");
-        printarray(blokplaintext);
-        System.out.println();
         putaranfeistel();
-        System.out.println("Sesudah Feistel ");
-        printarray(blokplaintext);
-        System.out.println();
         permutasiakhir();
+        blokciphertext = blokplaintext.clone();
     }
-
-
+    public void dekripsi(){
+        dekrippermutasiawal();
+        dekripputaranfeistel();
+        dekrippermutasiakhir();
+        blokplain2 = blokciphertext.clone();
+    }
 
     public void init(){
 
@@ -184,7 +146,6 @@ public class AlgoritmaGenos {
         }
     }
 
-
     public String fourbytetosstring(byte[] arr){
         String res = "";
         for (int i = 0 ; i < arr.length ; i++){
@@ -192,7 +153,6 @@ public class AlgoritmaGenos {
         }
         return res;
     }
-
 
     public void xor(byte[] blokkanan, byte[] blok2){
         for (int i = 0 ; i < blokkanan.length ; i++){
@@ -222,8 +182,6 @@ public class AlgoritmaGenos {
             blokkanan[i+3] = clone2[0];
         }
     }
-
-
 
     public void zigzag(byte[] blokkanan){
         byte[] clone = blokkanan.clone();
@@ -263,24 +221,11 @@ public class AlgoritmaGenos {
             blokplaintext[i] = plainclone[tabelpermutasiawal[i]];
         }
     }
-    public void dekrippermutasiawal(){
-        byte[] cipherclone = blokciphertext.clone();
-        for (int i = 0 ; i < blokciphertext.length ; i++){
-            blokciphertext[i] = cipherclone[tabelpermutasiawal[i]];
-        }
-    }
 
     public void permutasiakhir(){
         byte[] plainclone = blokplaintext.clone();
         for (int i = 0 ; i < blokplaintext.length ; i++){
             blokplaintext[i] = plainclone[tabelpermutasiakhir[i]];
-        }
-    }
-
-    public void dekrippermutasiakhir(){
-        byte[] cipherclone = blokciphertext.clone();
-        for (int i = 0 ; i < blokciphertext.length ; i++){
-            blokciphertext[i] = cipherclone[tabelpermutasiakhir[i]];
         }
     }
 
@@ -308,19 +253,24 @@ public class AlgoritmaGenos {
         return count;
     }
 
+
+
     // Dekripsi
 
 
-    public void dekripalgorithm(){
-        dekrippermutasiawal();
-        System.out.println("Sesudah Permutasi Awal");
-        printarray(blokciphertext);
-        System.out.println();
-        dekripputaranfeistel();
-        System.out.println("Sesudah Feistel ");
-        printarray(blokciphertext);
-        System.out.println();
-        dekrippermutasiakhir();
+
+    public void dekrippermutasiawal(){
+        byte[] cipherclone = blokciphertext.clone();
+        for (int i = 0 ; i < blokciphertext.length ; i++){
+            blokciphertext[i] = cipherclone[tabelpermutasiawal[i]];
+        }
+    }
+
+    public void dekrippermutasiakhir(){
+        byte[] cipherclone = blokciphertext.clone();
+        for (int i = 0 ; i < blokciphertext.length ; i++){
+            blokciphertext[i] = cipherclone[tabelpermutasiakhir[i]];
+        }
     }
 
     public void dekripputaranfeistel(){
@@ -372,5 +322,4 @@ public class AlgoritmaGenos {
             k++;
         }
     }
-
 }
